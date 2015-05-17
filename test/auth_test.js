@@ -8,7 +8,7 @@ var mongoose = require('mongoose');
 var User = require('../models/User.js');
 
 // point to db
-process.env.MONGOLAB_URI = 'mongodb://localhost/user_development';
+// process.env.MONGOLAB_URI = 'mongodb://localhost/user_development';
 
 // start server
 require('../server.js');

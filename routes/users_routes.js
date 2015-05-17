@@ -1,6 +1,6 @@
 'use strict';
 
-var eatAuth = require('../lib/eat_auth.js')(process.env.APP_SECRET);
+var eatAuth = require('../lib/eat_auth.js')(process.env.AUTH_SECRET);
 var bodyparser = require('body-parser');
 var User = require('../models/User'); // Require in model
 

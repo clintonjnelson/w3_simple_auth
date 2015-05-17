@@ -1,7 +1,7 @@
 'use strict';
 
 var bodyparser = require('body-parser');
-var eatAuth = require('../lib/eat_auth.js')(process.env.APP_SECRET);  // call func, passing secret
+var eatAuth = require('../lib/eat_auth.js')(process.env.AUTH_SECRET);  // call func, passing secret
 var User = require('../models/User.js');
 
 

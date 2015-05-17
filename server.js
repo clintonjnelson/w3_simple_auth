@@ -10,9 +10,8 @@ var authRouter = express.Router();
 var usersRouter = express.Router();
 
 // Setup db & host to listen
-// SETUP THESE AS ENV VARIABLES!!!!!!
 mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost/users_development');
-process.env.APP_SECRET = 'setThisENV_VAR';
+// process.env.AUTH_SECRET = 'setThisENV_VAR';
 
 // initialize passport strategy & configure with passport_strategy.js
 app.use(passport.initialize());
