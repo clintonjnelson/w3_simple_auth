@@ -6,15 +6,17 @@ var passport = require('passport');
 var app = express();                    // make app/server via express
 
 // Express Routers
-var authRouter = express.Router()
+var authRouter = express.Router();
 var usersRouter = express.Router();
 
 // Setup db & host to listen
 // SETUP THESE AS ENV VARIABLES!!!!!!
 mongoose.connect(process.env.MONGOLAB_URI || 'mongodb://localhost/users_development');
+process.env.APP_SECRET = 'setThisENV_VAR';
 
-// initialize passport strategy
+// initialize passport strategy & configure with passport_strategy.js
 app.use(passport.initialize());
+require('./lib/passport_strategy.js')(passport);
 
 // Populate Router by passing to routes file
 require('./routes/users_routes.js')(usersRouter);

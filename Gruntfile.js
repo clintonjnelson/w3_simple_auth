@@ -31,7 +31,7 @@ module.exports = function(grunt) {
       },
       options: {
         jshintrc: true
-      }
+      },
     },
     mochaTest: {
       test: {
@@ -41,7 +41,9 @@ module.exports = function(grunt) {
           quiet: false,
           clearRequireCache: false
         },
-        src: ['test/**/*_test.js']
+        // src: ['test/**/*_test.js']  // all tests
+        src: ['test/auth_test.js']    // auth tests only
+        // src: ['test/users_test.js']    // routes tests only
       }
     }
   });

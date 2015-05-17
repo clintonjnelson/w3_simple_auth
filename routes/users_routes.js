@@ -1,7 +1,8 @@
 'use strict';
 
-var User = require('../models/User'); // Require in model
+var eatAuth = require('../lib/eat_auth.js')(process.env.APP_SECRET);
 var bodyparser = require('body-parser');
+var User = require('../models/User'); // Require in model
 
 // setup function to export; takes express router
 module.exports = function(router) {
@@ -9,7 +10,7 @@ module.exports = function(router) {
 
 
   // R: get user (see user info)
-  router.get('/users/:username', function(req, res) {
+  router.get('/users/:username', eatAuth, function(req, res) {
     var username = req.params.username;  // // BODY EMPTY, PARAMS HAS: username
     User.find({'username': username}, function(err, data) {  // lookup in db
       if (err) {  // handle error - conole it, vague message user
@@ -18,33 +19,17 @@ module.exports = function(router) {
       }
 
       res.json(data);  // send raw data to user
-    });  // look in user model
-  });
-
-  // C: create user
-  router.post('/users', function(req, res) {
-    // get passed info from req.body & use mongoose to crate a new 'Thing'
-    var newUser = new User(req.body);  // assumes formatting of body is proper
-    newUser.save(function(err, data) {  //
-      // Validations
-      switch(true) {
-        case !!(err && err.code === 11000):
-          return res.json({msg: 'username already exists - please try a different username'});
-        case !!(err && err.errors.username):
-          return res.json( {msg: err.errors.username.message.replace("Path", '')});
-        case !!err:
-          console.log("INTERNAL SERVER ERROR IS:", err.errors.username.message);
-          return res.status(500).json({msg: 'internal server error'});
-      }
-
-      res.json(data);
     });
   });
 
+  // C: User creation POST route is now in auth_routes.js
+
   // U: update user
-  router.put('/users/:id', function(req, res) {
+  router.put('/users/:id', eatAuth, function(req, res) {
     var updatedUser = req.body;
+    console.log('HERE"S THE USER ITS TRYING TO UPDATE FOR: ', req.body);
     delete updatedUser._id;   // pass option for props to ignore in update
+    delete updatedUser.eat;   // DELETE ENCODED TOKEN
 
     User.update({'_id': req.params.id}, updatedUser, function(err, data) {
       switch(true) {
@@ -64,7 +49,7 @@ module.exports = function(router) {
   });
 
   // D: destroy user
-  router.delete('/users/:id', function(req, res) {
+  router.delete('/users/:id', eatAuth, function(req, res) {
     User.remove({'_id': req.params.id}, function(err, data) {
       switch(true) {
         case !!(err && err.name === 'CastError'):

@@ -16,24 +16,35 @@ require('../server.js');
 describe('Users', function() {
   describe('with existing user', function() {
     // Setup Database before each describe block
+    var resToken;
     var newUser;
     before(function(done) {
-      newUser = User.create({username: 'joe', email: 'joe@joe.com', passtoken: '1234'}, function(err, newUser) {
-        done();
-      });
+      chai.request('localhost:3000')
+        .post('/api/createuser')
+        // .send({username: faker.Name.findName(), email: faker.Internet.email(), password: 'foobar'})
+        .send({username: 'joe', email: 'joe@example.com', password: 'foobar'})
+        .end(function(err, res) {
+          expect(err).to.eq(null);
+          resToken = res.body.eat;
+          User.findOne({username: 'joe'}, function(err, user){
+            expect(err).to.eq(null);
+            newUser = user;
+            done();
+          });
+        });
     });
     // Drop database after each run
-    after(function(done) {
-      mongoose.connection.db.dropDatabase(function() {
-        done();
-      });
+    after(function() {
+      mongoose.connection.db.dropDatabase(function(){});
     });
 
-    describe('GET for a specific user', function() {
+    describe('GET /spi/users/joe for a specific user', function() {
       var joe;
+      console.log('RESTOKEN IS: ', resToken);
       before(function(done) {
         chai.request('localhost:3000')
           .get('/api/users/joe')
+          .send({eat: resToken})
           .end(function(err, res) {
             joe = res.body[0];
             done();
@@ -46,32 +57,21 @@ describe('Users', function() {
         expect(joe.username).to.eql('joe');
       });
       it('returns the user\'s  email', function() {
-        expect(joe.email).to.eql('joe@joe.com');
+        expect(joe.basic.email).to.eql('joe@example.com');
       });
       it('returns the user\'s  passtoken', function() {
-        expect(joe.passtoken).to.eql('1234');
-      });
-    });
-
-    describe('POST', function() {
-      it('does NOT create a duplicate username', function(done) {
-        chai.request('localhost:3000')
-          .post('/api/users')
-          .send({username: 'joe'})
-          .end(function(err, res) {
-            expect(err).to.eql(null);
-            expect(res.body.msg).to.eql('username already exists - please try a different username');
-            done();
-          });
+        expect(typeof joe.basic.password).to.eq('string');
       });
     });
 
     describe('PUT', function() {
       var response;
       before(function(done) {
+        console.log('NEW USER THAT WE NEED TO USE: ', newUser);
         chai.request('localhost:3000')
-          .put('/api/users/' + newUser.emitted.fulfill[0]._id)
+          .put('/api/users/' + newUser._id)
           .send({email: 'joe@newemail.com'})
+          .send({eat: resToken})
           .end(function(err, res) {
             response = res.body;
             done();
@@ -86,21 +86,19 @@ describe('Users', function() {
       var response;
       before(function(done) {
         chai.request('localhost:3000')
-          .del('/api/users/' + newUser.emitted.fulfill[0]._id)
+          .del('/api/users/' + newUser._id)
+          .send({eat: resToken})
           .end(function(err, res) {
             response = res.body;
             done();
           });
       });
       // Having my POST test above triggers this to be wrong... how fix?
-      it('deletes the user', function(done) {
-        chai.request('localhost:3000')
-          .get('/api/users/joe')
-          .end(function(err, res) {
-            expect(err).to.eql(null);
-            expect(res.body).to.eql([]);
-            done();
-          });
+      it('deletes the user from db', function(done) {
+        User.find({'_id': newUser.id}, function(err, user) {
+          expect(user).to.eql([]);
+          done();
+        });
       });
       it('responds with the message "user removed"', function() {
         expect(response.msg).to.eql('user removed');
@@ -110,63 +108,36 @@ describe('Users', function() {
 
 
   describe('with NON-existing user', function() {
-    describe('GET', function() {
-      it('returns a blank array', function(done) {
+    describe('GET /api/notauser', function() {
+      it('returns a message to please sign in', function(done) {
         chai.request('localhost:3000')
-          .get('/api/notauser')
+          .get('/api/users/notauser')
           .end(function(err, res) {
             expect(err).to.eql(null);
-            expect(res.body).to.eql({});
+            expect(res.body.msg).to.eql('please sign in to do that');
             done();
           });
       });
     });
-    describe('POST', function() {
-      describe('with no username', function() {
-        it('does not create a user', function(done) {
-          chai.request('localhost:3000')
-            .post('/api/users')
-            .send({ username: '', email: 'fail@fail.com' })
-            .end(function(err, res) {
-              var user = User.find({}, function(err, docs) {
-                expect(err).to.eq(null);
-                expect(docs.length).to.eq(0);
-                done();
-              });
-            });
-        });
-        it('returns the validation error message in the body', function(done) {
-          chai.request('localhost:3000')
-            .post('/api/users')
-            .send({username: ''})
-            .end(function(err, res) {
-              expect(err).to.eq(null);
-              expect(res.body.msg).to.include('username');
-              expect(res.body.msg).to.include('is required');
-              done();
-            });
-        });
-      });
-    });
     describe('PUT', function() {
-      it('returns the error message in the body', function(done) {
+      it('returns an auth error message in the body', function(done) {
         chai.request('localhost:3000')
           .put('/api/users/123456789wrong')
           .send({username: 'thiswillfail'})
           .end(function(err, res) {
             expect(err).to.eq(null);
-            expect(res.body.msg).to.eq('invalid user');
+            expect(res.body.msg).to.eq('please sign in to do that');
             done();
           });
       });
     });
     describe('DELETE', function() {
-      it('returns an error message in the body', function(done) {
+      it('returns an auth error message in the body', function(done) {
         chai.request('localhost:3000')
           .del('/api/users/123456789wrong')
           .end(function(err, res) {
             expect(err).to.eq(null);
-            expect(res.body.msg).to.eq('invalid user');
+            expect(res.body.msg).to.eq('please sign in to do that');
             done();
           });
       });
