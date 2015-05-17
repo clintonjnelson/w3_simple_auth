@@ -2,16 +2,18 @@
 
 var chai = require('chai');
 var chaihttp = require('chai-http');
+
 var expect = chai.expect;
 chai.use(chaihttp);
 var mongoose = require('mongoose');
 var User = require('../models/User.js');
 
 // point to db
-// process.env.MONGOLAB_URI = 'mongodb://localhost/user_development';
+process.env.MONGOLAB_URI = 'mongodb://localhost/user_development';
 
 // start server
 require('../server.js');
+
 
 // Tests
 describe('Authentication', function() {
@@ -32,8 +34,8 @@ describe('Authentication', function() {
           });
         });
     });
-    afterEach(function(done) {
-      mongoose.connection.db.dropDatabase(function(){done();});
+    afterEach(function() {
+      mongoose.connection.db.dropDatabase(function(){});
     });
 
     describe('POST /createuser', function() {

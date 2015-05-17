@@ -21,7 +21,6 @@ describe('Users', function() {
     before(function(done) {
       chai.request('localhost:3000')
         .post('/api/createuser')
-        // .send({username: faker.Name.findName(), email: faker.Internet.email(), password: 'foobar'})
         .send({username: 'joe', email: 'joe@example.com', password: 'foobar'})
         .end(function(err, res) {
           expect(err).to.eq(null);
@@ -34,8 +33,8 @@ describe('Users', function() {
         });
     });
     // Drop database after each run
-    after(function() {
-      mongoose.connection.db.dropDatabase(function(){});
+    after(function(done) {
+      mongoose.connection.db.dropDatabase(function(){done();});
     });
 
     describe('GET /spi/users/joe for a specific user', function() {

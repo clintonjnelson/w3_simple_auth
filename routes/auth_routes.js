@@ -26,7 +26,7 @@ module.exports = function(router, passport) {
           console.log(err);
           return res.status(500).json({msg: 'email has already been used'});
         }
-        user.genToken(process.env.APP_SECRET, function(err, eat) {
+        user.genToken(process.env.AUTH_SECRET, function(err, eat) {
           if (err) {
             console.log(err);
             return res.status(500).json({msg: 'error generating authorization token'});
@@ -40,7 +40,7 @@ module.exports = function(router, passport) {
   // Existing user signin (creating EAT)
   router.get('/signin', passport.authenticate('basic', { session: false }), function(req, res) {
     // user gets added to the request on success by passport_strategy
-    req.user.genToken(process.env.APP_SECRET, function(err, eat) {
+    req.user.genToken(process.env.AUTH_SECRET, function(err, eat) {
       if (err) {
         console.log(err);
         return res.status(500).json({msg: 'error generating authorization token'});
